@@ -103,69 +103,27 @@ BatchOHLCProcessor::FeatureSet BatchOHLCProcessor::calculate_organized_features(
         features.candle_filling = std::move(candle_info.second.first);
         features.candle_amplitude = std::move(candle_info.second.second);
         
-        // Calculate math features with error handling
-        try {
-            features.skewness_30 = TechnicalIndicators::skewness(close, 30);
-        } catch (...) {
-            features.skewness_30.resize(data_size, 0.0);
-        }
-        
-        try {
-            features.kurtosis_30 = TechnicalIndicators::kurtosis(close, 30);
-        } catch (...) {
-            features.kurtosis_30.resize(data_size, 0.0);
-        }
-        
-        try {
-            features.log_pct_change_5 = TechnicalIndicators::log_pct_change(close, 5);
-        } catch (...) {
-            features.log_pct_change_5.resize(data_size, 0.0);
-        }
-        
-        try {
-            features.auto_correlation_50_10 = TechnicalIndicators::auto_correlation(close, 50, 10);
-        } catch (...) {
-            features.auto_correlation_50_10.resize(data_size, 0.0);
-        }
+        // Calculate math features - now properly implemented
+        features.skewness_30 = TechnicalIndicators::skewness(close, 30);
+        features.kurtosis_30 = TechnicalIndicators::kurtosis(close, 30);
+        features.log_pct_change_5 = TechnicalIndicators::log_pct_change(close, 5);
+        features.auto_correlation_50_10 = TechnicalIndicators::auto_correlation(close, 50, 10);
         
         // Calculate trend features
-        try {
-            features.kama_10_2_30 = TechnicalIndicators::kama(close, 10, 2, 30);
-        } catch (...) {
-            features.kama_10_2_30.resize(data_size, 0.0);
-        }
-        
-        try {
-            features.linear_slope_20 = TechnicalIndicators::linear_slope(close, 20);
-        } catch (...) {
-            features.linear_slope_20.resize(data_size, 0.0);
-        }
-        
-        try {
-            features.linear_slope_60 = TechnicalIndicators::linear_slope(close, 60);
-        } catch (...) {
-            features.linear_slope_60.resize(data_size, 0.0);
-        }
+        features.kama_10_2_30 = TechnicalIndicators::kama(close, 10, 2, 30);
+        features.linear_slope_20 = TechnicalIndicators::linear_slope(close, 20);
+        features.linear_slope_60 = TechnicalIndicators::linear_slope(close, 60);
         
         // Calculate volatility features
-        try {
-            features.parkinson_volatility_20 = TechnicalIndicators::parkinson_volatility(high, low, 20);
-        } catch (...) {
-            features.parkinson_volatility_20.resize(data_size, 0.0);
-        }
+        features.parkinson_volatility_20 = TechnicalIndicators::parkinson_volatility(high, low, 20);
         
         // Calculate volume features
         features.volume_sma_20 = TechnicalIndicators::simple_moving_average(volume, 20);
         
         // Calculate derivatives
-        try {
-            auto derivatives_pair = TechnicalIndicators::derivatives(close);
-            features.velocity = std::move(derivatives_pair.first);
-            features.acceleration = std::move(derivatives_pair.second);
-        } catch (...) {
-            features.velocity.resize(data_size, 0.0);
-            features.acceleration.resize(data_size, 0.0);
-        }
+        auto derivatives_pair = TechnicalIndicators::derivatives(close);
+        features.velocity = std::move(derivatives_pair.first);
+        features.acceleration = std::move(derivatives_pair.second);
         
     } catch (const std::exception& e) {
         throw std::runtime_error("Error calculating features: " + std::string(e.what()));

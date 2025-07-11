@@ -97,8 +97,8 @@ void FastCSVWriter::write_ohlcv_with_features(
             file << ohlcv_data.symbol << ",";
             file << data_frequency << ",";
             
-            // Technical indicators with proper indexing
-            file << safe_get_value(returns, i > 0 ? i - 1 : 0) << ",";
+            // Technical indicators with corrected indexing
+            file << safe_get_value(returns, i >= 1 ? i - 1 : 0) << ",";
             file << safe_get_value(sma, i) << ",";
             file << safe_get_value(rsi, i) << ",";
             file << safe_get_value(volatility, i) << ",";
@@ -114,8 +114,8 @@ void FastCSVWriter::write_ohlcv_with_features(
             file << safe_get_value(linear_slope_60, i) << ",";
             file << safe_get_value(parkinson_volatility_20, i) << ",";
             file << safe_get_value(volume_sma_20, i) << ",";
-            file << safe_get_value(velocity, i > 0 ? i - 1 : 0) << ",";
-            file << safe_get_value(acceleration, i > 1 ? i - 2 : 0) << ",";
+            file << safe_get_value(velocity, i >= 1 ? i - 1 : 0) << ",";
+            file << safe_get_value(acceleration, i >= 2 ? i - 2 : 0) << ",";
             file << safe_get_int_value(candle_way, i) << ",";
             file << safe_get_value(candle_filling, i) << ",";
             file << safe_get_value(candle_amplitude, i);
