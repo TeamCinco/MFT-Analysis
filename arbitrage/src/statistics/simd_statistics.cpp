@@ -188,33 +188,7 @@ void SIMDStatistics::endTiming(size_t operations, const std::string& simd_type) 
     }
 }
 
-// Cointegration analyzer implementation
-CointegrationResult SIMDCointegrationAnalyzer::analyzeCointegration_SIMD(
-    const StockData& stock1,
-    const StockData& stock2) {
-    
-    CointegrationResult result;
-    result.stock1 = stock1.symbol;
-    result.stock2 = stock2.symbol;
-    
-    // Simplified implementation - in reality this would perform proper cointegration testing
-    if (stock1.close.size() == stock2.close.size() && !stock1.close.empty()) {
-        // Calculate hedge ratio using linear regression
-        // Convert aligned vectors to standard vectors for linearRegression_SIMD
-        std::vector<double> close1(stock1.close.begin(), stock1.close.end());
-        std::vector<double> close2(stock2.close.begin(), stock2.close.end());
-        result.hedge_ratio = SIMDStatistics::linearRegression_SIMD(close1, close2).second;
-        
-        // Dummy values for testing
-        result.adf_statistic = -3.5;
-        result.p_value = 0.01;
-        result.is_cointegrated = result.p_value < 0.05;
-        result.cointegration_grade = result.is_cointegrated ? "A" : "D";
-        result.half_life = 12.5;
-    }
-    
-    return result;
-}
+// Note: Cointegration analyzer implementation moved to cointegration_analyzer.cpp
 
 // Correlation analyzer implementation
 CorrelationResult SIMDCorrelationAnalyzer::analyzeCorrelation_SIMD(

@@ -91,22 +91,71 @@ std::vector<CointegrationResult> ArbitrageAnalyzer::analyzeCointegration(
     const std::vector<std::unique_ptr<StockData>>& stocks,
     const AnalysisConfig& config) {
     
-    // Placeholder implementation
     std::vector<CointegrationResult> results;
     
-    // For now, just create some dummy results to test the system
-    if (stocks.size() >= 2) {
-        CointegrationResult dummy_result;
-        dummy_result.stock1 = stocks[0]->symbol;
-        dummy_result.stock2 = stocks[1]->symbol;
-        dummy_result.adf_statistic = -3.5;
-        dummy_result.p_value = 0.01;
-        dummy_result.hedge_ratio = 1.2;
-        dummy_result.is_cointegrated = true;
-        dummy_result.cointegration_grade = "A";
-        
-        results.push_back(dummy_result);
+    if (stocks.size() < 2) {
+        return results;
     }
+    
+    // Generate all possible pairs for analysis
+    std::vector<std::pair<const StockData*, const StockData*>> stock_pairs;
+    
+    size_t max_pairs = config.max_pairs_to_analyze > 0 ? 
+                      static_cast<size_t>(config.max_pairs_to_analyze) : 
+                      stocks.size() * (stocks.size() - 1) / 2;
+    
+    size_t pairs_generated = 0;
+    
+    for (size_t i = 0; i < stocks.size() && pairs_generated < max_pairs; ++i) {
+        for (size_t j = i + 1; j < stocks.size() && pairs_generated < max_pairs; ++j) {
+            if (stocks[i] && stocks[j]) {
+                // Check if pair meets basic criteria
+                if (isValidPair(*stocks[i], *stocks[j], config)) {
+                    stock_pairs.emplace_back(stocks[i].get(), stocks[j].get());
+                    pairs_generated++;
+                }
+            }
+        }
+    }
+    
+    total_pairs_ = stock_pairs.size();
+    pairs_completed_ = 0;
+    
+    reportProgress("Analyzing Cointegration", 0.0);
+    
+    // Analyze pairs in parallel using enhanced cointegration analyzer
+    if (config.num_threads > 1) {
+        results = analyzeCointegrationParallel(stocks, config);
+    } else {
+        // Sequential analysis
+        results.reserve(stock_pairs.size());
+        
+        for (size_t i = 0; i < stock_pairs.size(); ++i) {
+            auto result = SIMDCointegrationAnalyzer::analyzeCointegration_SIMD(
+                *stock_pairs[i].first, *stock_pairs[i].second);
+            
+            // Only keep cointegrated pairs that meet our criteria
+            if (result.is_cointegrated && 
+                result.p_value <= config.max_cointegration_pvalue &&
+                result.half_life > 0 && result.half_life < 100) {
+                results.push_back(result);
+            }
+            
+            pairs_completed_++;
+            if (i % 100 == 0) {
+                double progress = static_cast<double>(i) / stock_pairs.size() * 100.0;
+                reportProgress("Analyzing Cointegration", progress);
+            }
+        }
+    }
+    
+    reportProgress("Analyzing Cointegration", 100.0);
+    
+    // Sort results by statistical significance (p-value ascending)
+    std::sort(results.begin(), results.end(), 
+              [](const CointegrationResult& a, const CointegrationResult& b) {
+                  return a.p_value < b.p_value;
+              });
     
     return results;
 }
@@ -181,6 +230,106 @@ void ArbitrageAnalyzer::reportProgress(const std::string& stage, double progress
     if (progress_callback_) {
         progress_callback_(stage, progress);
     }
+}
+
+// Check if a pair of stocks is valid for analysis
+bool ArbitrageAnalyzer::isValidPair(
+    const StockData& stock1,
+    const StockData& stock2,
+    const AnalysisConfig& config) {
+    
+    // Check minimum data points
+    if (stock1.size() < config.min_data_points || stock2.size() < config.min_data_points) {
+        return false;
+    }
+    
+    // Check if data sizes match
+    if (stock1.size() != stock2.size()) {
+        return false;
+    }
+    
+    // Check sector requirements
+    if (config.require_same_sector && stock1.sector != stock2.sector) {
+        return false;
+    }
+    
+    // Check if symbols are in excluded list
+    for (const auto& excluded : config.excluded_symbols) {
+        if (stock1.symbol == excluded || stock2.symbol == excluded) {
+            return false;
+        }
+    }
+    
+    // Check price constraints
+    if (!stock1.close.empty() && !stock2.close.empty()) {
+        double price1 = stock1.close.back();
+        double price2 = stock2.close.back();
+        
+        if (price1 < config.portfolio_constraints.min_stock_price || 
+            price1 > config.portfolio_constraints.max_stock_price ||
+            price2 < config.portfolio_constraints.min_stock_price || 
+            price2 > config.portfolio_constraints.max_stock_price) {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+// Parallel cointegration analysis implementation
+std::vector<CointegrationResult> ArbitrageAnalyzer::analyzeCointegrationParallel(
+    const std::vector<std::unique_ptr<StockData>>& stocks,
+    const AnalysisConfig& config) {
+    
+    // For now, fall back to sequential analysis
+    // In a full implementation, this would use thread pools
+    std::vector<CointegrationResult> results;
+    
+    if (stocks.size() < 2) {
+        return results;
+    }
+    
+    // Generate pairs
+    std::vector<std::pair<const StockData*, const StockData*>> stock_pairs;
+    
+    size_t max_pairs = config.max_pairs_to_analyze > 0 ? 
+                      static_cast<size_t>(config.max_pairs_to_analyze) : 
+                      stocks.size() * (stocks.size() - 1) / 2;
+    
+    size_t pairs_generated = 0;
+    
+    for (size_t i = 0; i < stocks.size() && pairs_generated < max_pairs; ++i) {
+        for (size_t j = i + 1; j < stocks.size() && pairs_generated < max_pairs; ++j) {
+            if (stocks[i] && stocks[j]) {
+                if (isValidPair(*stocks[i], *stocks[j], config)) {
+                    stock_pairs.emplace_back(stocks[i].get(), stocks[j].get());
+                    pairs_generated++;
+                }
+            }
+        }
+    }
+    
+    // Analyze pairs sequentially for now
+    results.reserve(stock_pairs.size());
+    
+    for (size_t i = 0; i < stock_pairs.size(); ++i) {
+        auto result = SIMDCointegrationAnalyzer::analyzeCointegration_SIMD(
+            *stock_pairs[i].first, *stock_pairs[i].second);
+        
+        if (result.is_cointegrated && 
+            result.p_value <= config.max_cointegration_pvalue &&
+            result.half_life > 0 && result.half_life < 100) {
+            results.push_back(result);
+        }
+        
+        pairs_completed_++;
+        if (i % 100 == 0) {
+            double progress = static_cast<double>(i) / stock_pairs.size() * 100.0;
+            reportProgress("Analyzing Cointegration", progress);
+        }
+    }
+    
+    return results;
 }
 
 // Configuration management implementation
