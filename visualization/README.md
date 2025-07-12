@@ -92,7 +92,8 @@ make MFTAnalysis
 
 ### Pairs Data
 - CSV file with cointegration analysis results
-- Sample file: `cointegration_sample.csv`
+- Real data: `cointegration_results.csv` (73,000+ pairs from your arbitrage analysis)
+- Sample file: `cointegration_sample.csv` (2 pairs for testing)
 - Contains statistical tests, trading metrics, and performance data
 
 ## Features Comparison

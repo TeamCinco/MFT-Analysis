@@ -68,8 +68,8 @@ int main() {
     
     CointegrationVisualizer visualizer;
     
-    // Auto-load the sample data
-    visualizer.loadCSVFile("cointegration_sample.csv");
+    // Auto-load the real cointegration data
+    visualizer.loadCSVFile("cointegration_results.csv");
     
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();

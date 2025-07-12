@@ -85,7 +85,11 @@ void CointegrationVisualizer::renderUI() {
     if (ImGui::BeginMenuBar()) {
         if (ImGui::BeginMenu("File")) {
             if (ImGui::MenuItem("Load CSV...")) {
-                // For now, load the sample file
+                // Load the real cointegration results
+                loadCSVFile("cointegration_results.csv");
+            }
+            if (ImGui::MenuItem("Load Sample Data...")) {
+                // Load the sample file for testing
                 loadCSVFile("cointegration_sample.csv");
             }
             if (ImGui::MenuItem("Export Filtered Data...")) {

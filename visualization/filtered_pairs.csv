@@ -1,3 +1,0 @@
-Stock1,Stock2,ADF_Statistic,P_Value,Critical_1pct,Critical_5pct,Critical_10pct,Half_Life_Days,Hedge_Ratio,Spread_Mean,Spread_StdDev,Max_Spread,Min_Spread,Current_Spread,Z_Score,Grade,Is_Cointegrated,Entry_Threshold,Exit_Threshold,Expected_Return,Sharpe_Ratio,Historical_Trades,Win_Rate
-ALGN,STAA,-3.66574,0.01,-3.43,-2.86,-2.57,98.18,0.172327,-1.72912,13.4981,61.7775,-34.3282,-17.4611,-1.1655,C,TRUE,2,0.5,0.001695,0.202213,35,0.542857
-JLS,EBF,-5.36956,0.01,-3.43,-2.86,-2.57,46.72,-0.406912,27.217,2.09058,32.668,20.5836,26.0032,-0.580585,A,TRUE,2,0.5,0.013807,1.3406,8,0.875

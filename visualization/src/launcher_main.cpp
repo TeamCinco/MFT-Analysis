@@ -77,8 +77,8 @@ int main() {
     StockVisualizer stockVisualizer;
     CointegrationVisualizer pairsVisualizer;
     
-    // Auto-load sample data for pairs visualizer
-    pairsVisualizer.loadCSVFile("cointegration_sample.csv");
+    // Auto-load real cointegration data for pairs visualizer
+    pairsVisualizer.loadCSVFile("cointegration_results.csv");
     
     VisualizationMode currentMode = VisualizationMode::LAUNCHER;
     
