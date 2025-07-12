@@ -18,13 +18,29 @@ include_directories(deps/imgui/backends)
 include_directories(deps/implot)
 include_directories(deps/gl3w/include)
 
-# Source files
+# Source files for original visualizer
 set(SOURCES
     src/main.cpp
     src/StockVisualizer.cpp
     src/ChartRenderer.cpp
     src/FileManager.cpp
     src/UIComponents.cpp
+)
+
+# Source files for pairs visualizer
+set(PAIRS_SOURCES
+    src/pairs_main.cpp
+    src/CointegrationVisualizer.cpp
+)
+
+# Source files for unified launcher
+set(LAUNCHER_SOURCES
+    src/launcher_main.cpp
+    src/StockVisualizer.cpp
+    src/ChartRenderer.cpp
+    src/FileManager.cpp
+    src/UIComponents.cpp
+    src/CointegrationVisualizer.cpp
 )
 
 # ImGui sources
@@ -49,7 +65,7 @@ set(GL3W_SOURCE
     deps/gl3w/src/gl3w.c
 )
 
-# Create executable
+# Create original stock visualizer executable
 add_executable(${PROJECT_NAME} 
     ${SOURCES} 
     ${IMGUI_SOURCES} 
@@ -57,8 +73,38 @@ add_executable(${PROJECT_NAME}
     ${GL3W_SOURCE}
 )
 
-# Link libraries
+# Create pairs visualizer executable
+add_executable(PairsVisualizer
+    ${PAIRS_SOURCES} 
+    ${IMGUI_SOURCES} 
+    ${IMPLOT_SOURCES} 
+    ${GL3W_SOURCE}
+)
+
+# Create unified launcher executable
+add_executable(MFTAnalysis
+    ${LAUNCHER_SOURCES} 
+    ${IMGUI_SOURCES} 
+    ${IMPLOT_SOURCES} 
+    ${GL3W_SOURCE}
+)
+
+# Link libraries for original visualizer
 target_link_libraries(${PROJECT_NAME} 
+    ${GLFW3_LIBRARIES}
+    ${OPENGL_LIBRARIES}
+    ${CMAKE_DL_LIBS}
+)
+
+# Link libraries for pairs visualizer
+target_link_libraries(PairsVisualizer 
+    ${GLFW3_LIBRARIES}
+    ${OPENGL_LIBRARIES}
+    ${CMAKE_DL_LIBS}
+)
+
+# Link libraries for unified launcher
+target_link_libraries(MFTAnalysis 
     ${GLFW3_LIBRARIES}
     ${OPENGL_LIBRARIES}
     ${CMAKE_DL_LIBS}
@@ -67,16 +113,28 @@ target_link_libraries(${PROJECT_NAME}
 # Add GLFW library path for macOS
 if(APPLE)
     target_link_directories(${PROJECT_NAME} PRIVATE /opt/homebrew/lib)
+    target_link_directories(PairsVisualizer PRIVATE /opt/homebrew/lib)
+    target_link_directories(MFTAnalysis PRIVATE /opt/homebrew/lib)
 endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${GLFW3_INCLUDE_DIRS})
 target_compile_options(${PROJECT_NAME} PRIVATE ${GLFW3_CFLAGS_OTHER})
 
+target_include_directories(PairsVisualizer PRIVATE ${GLFW3_INCLUDE_DIRS})
+target_compile_options(PairsVisualizer PRIVATE ${GLFW3_CFLAGS_OTHER})
+
+target_include_directories(MFTAnalysis PRIVATE ${GLFW3_INCLUDE_DIRS})
+target_compile_options(MFTAnalysis PRIVATE ${GLFW3_CFLAGS_OTHER})
+
 # Compiler-specific options
 if(UNIX AND NOT APPLE)
     target_link_libraries(${PROJECT_NAME} pthread)
+    target_link_libraries(PairsVisualizer pthread)
+    target_link_libraries(MFTAnalysis pthread)
 endif()
 
 if(APPLE)
     target_link_libraries(${PROJECT_NAME} "-framework Cocoa" "-framework IOKit" "-framework CoreVideo")
+    target_link_libraries(PairsVisualizer "-framework Cocoa" "-framework IOKit" "-framework CoreVideo")
+    target_link_libraries(MFTAnalysis "-framework Cocoa" "-framework IOKit" "-framework CoreVideo")
 endif()

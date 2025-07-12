@@ -21,4 +21,5 @@ public:
     void renderCharts(const std::string& symbol, const std::vector<StockData>& data);
     int getTotalDataPoints();
     void clearData();
+    bool isDataLoaded() const { return dataLoaded; }
 };
