@@ -9,6 +9,15 @@ public:
     static void renderTechnicalIndicators(const std::string& symbol, const std::vector<StockData>& data);
     static void renderAdvancedFeatures(const std::string& symbol, const std::vector<StockData>& data);
     static void renderDistributionShapeCharts(const std::string& symbol, const std::vector<StockData>& data);
+    
+    // New advanced visualization functions
+    static void renderOscillators(const std::string& symbol, const std::vector<StockData>& data);
+    static void renderIchimokuCloud(const std::string& symbol, const std::vector<StockData>& data);
+    static void renderVolumeProfile(const std::string& symbol, const std::vector<StockData>& data);
+    static void renderStatisticalMeasures(const std::string& symbol, const std::vector<StockData>& data);
+    static void renderRiskMetrics(const std::string& symbol, const std::vector<StockData>& data);
+    static void renderRegimeAnalysis(const std::string& symbol, const std::vector<StockData>& data);
+    
     static void renderStatistics(const std::vector<StockData>& data);
     
 private:

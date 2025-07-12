@@ -91,6 +91,42 @@ void StockVisualizer::renderCharts(const std::string& symbol, const std::vector<
             ImGui::EndTabItem();
         }
         
+        // Oscillators Tab
+        if (ImGui::BeginTabItem("Oscillators")) {
+            ChartRenderer::renderOscillators(symbol, data);
+            ImGui::EndTabItem();
+        }
+        
+        // Ichimoku & SuperTrend Tab
+        if (ImGui::BeginTabItem("Ichimoku & Trends")) {
+            ChartRenderer::renderIchimokuCloud(symbol, data);
+            ImGui::EndTabItem();
+        }
+        
+        // Volume Profile Tab
+        if (ImGui::BeginTabItem("Volume Profile")) {
+            ChartRenderer::renderVolumeProfile(symbol, data);
+            ImGui::EndTabItem();
+        }
+        
+        // Statistical Measures Tab
+        if (ImGui::BeginTabItem("Statistical Measures")) {
+            ChartRenderer::renderStatisticalMeasures(symbol, data);
+            ImGui::EndTabItem();
+        }
+        
+        // Risk Metrics Tab
+        if (ImGui::BeginTabItem("Risk Metrics")) {
+            ChartRenderer::renderRiskMetrics(symbol, data);
+            ImGui::EndTabItem();
+        }
+        
+        // Regime Analysis Tab
+        if (ImGui::BeginTabItem("Regime Analysis")) {
+            ChartRenderer::renderRegimeAnalysis(symbol, data);
+            ImGui::EndTabItem();
+        }
+        
         // Distribution & Shape Tab
         if (ImGui::BeginTabItem("Distribution & Shape")) {
             ChartRenderer::renderDistributionShapeCharts(symbol, data);
