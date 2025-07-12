@@ -190,7 +190,7 @@ std::vector<double> SIMDTechnicalIndicators::linear_slope_simd(const std::vector
 }
 
 std::vector<double> SIMDTechnicalIndicators::log_pct_change_simd(const std::vector<double>& prices, int window_size) {
-    if (prices.size() < static_cast<size_t>(window_size + 1)) return {};
+    if (prices.size() <= static_cast<size_t>(window_size)) return {};
     std::vector<double> current(prices.begin() + window_size, prices.end());
     std::vector<double> past(prices.begin(), prices.end() - window_size);
     auto ratios = simd_divide_arrays(current, past);
@@ -202,6 +202,13 @@ std::vector<double> SIMDTechnicalIndicators::log_pct_change_simd(const std::vect
         r = (r > 0) ? std::log(r) : 0.0;
     }
     return ratios;
+}
+
+std::vector<double> SIMDTechnicalIndicators::calculate_momentum_simd(const std::vector<double>& prices, int period) {
+    if (prices.size() <= static_cast<size_t>(period)) return {};
+    std::vector<double> current(prices.begin() + period, prices.end());
+    std::vector<double> past(prices.begin(), prices.end() - period);
+    return simd_divide_arrays(current, past);
 }
 
 #else 
@@ -223,6 +230,15 @@ std::vector<double> SIMDTechnicalIndicators::linear_slope_simd(const std::vector
 }
 std::vector<double> SIMDTechnicalIndicators::log_pct_change_simd(const std::vector<double>& prices, int window_size) { 
     return TechnicalIndicators::log_pct_change(prices, window_size); 
+}
+std::vector<double> SIMDTechnicalIndicators::calculate_momentum_simd(const std::vector<double>& prices, int period) {
+    if (prices.size() <= static_cast<size_t>(period)) return {};
+    std::vector<double> result;
+    result.reserve(prices.size() - period);
+    for (size_t i = period; i < prices.size(); ++i) {
+        result.push_back(prices[i-period] != 0.0 ? prices[i] / prices[i-period] : 0.0);
+    }
+    return result;
 }
 #endif
 

@@ -23,6 +23,7 @@ public:
     static std::vector<double> compute_spread_simd(const std::vector<double>& high, const std::vector<double>& low);
     static std::vector<double> linear_slope_simd(const std::vector<double>& prices, int window_size);
     static std::vector<double> log_pct_change_simd(const std::vector<double>& prices, int window_size);
+    static std::vector<double> calculate_momentum_simd(const std::vector<double>& prices, int period);
 
     static void process_multiple_series_parallel(
         const std::vector<std::vector<double>>& input_series,

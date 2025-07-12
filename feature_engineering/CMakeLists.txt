@@ -22,7 +22,27 @@ target_link_libraries(run_feature_extractor PRIVATE ohlc_features)
 if(MSVC)
     target_compile_options(ohlc_features PRIVATE /O2 /arch:AVX2 /fp:fast)
 else()
-    target_compile_options(ohlc_features PRIVATE -O3 -march=native -mavx2 -mfma -funroll-loops -ffast-math)
+    # Detect ARM vs x86 and apply appropriate optimizations
+    if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64|ARM64")
+        # ARM-specific optimizations for Apple Silicon
+        target_compile_options(ohlc_features PRIVATE 
+            -O3 -march=native -mcpu=apple-m1 
+            -ffast-math -funroll-loops -fvectorize 
+            -flto -fomit-frame-pointer
+            -finline-functions
+            -fno-signed-zeros -fno-trapping-math
+            -freciprocal-math -ffp-contract=fast
+        )
+        target_link_options(ohlc_features PRIVATE -flto)
+    else()
+        # x86-specific optimizations
+        target_compile_options(ohlc_features PRIVATE 
+            -O3 -march=native -mavx2 -mfma -funroll-loops -ffast-math
+            -flto -fomit-frame-pointer
+            -finline-functions
+        )
+        target_link_options(ohlc_features PRIVATE -flto)
+    endif()
 endif()
 
 

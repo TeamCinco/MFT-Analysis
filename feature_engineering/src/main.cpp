@@ -1,7 +1,14 @@
 #include "csv_reader.h"
 #include "csv_writer.h"
 #include "batch_ohlc_processor.h"
+#include "performance_benchmark.h"
+#include "large_scale_benchmark.h"
+#include "multi_core_benchmark.h"
+#include "adaptive_core_benchmark.h"
+#include "neon_technical_indicators.h"
+#include "simd_technical_indicators.h"
 #include <iostream>
+#include <iomanip>
 #include <chrono>
 #include <stdexcept>
 #include <filesystem>
@@ -24,7 +31,44 @@ void create_dummy_csv(const std::string& filepath, int num_rows) {
     }
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+    // Check for benchmark mode
+    if (argc > 1 && std::string(argv[1]) == "--benchmark") {
+        std::cout << "=== RUNNING PERFORMANCE BENCHMARK ===" << std::endl;
+        run_performance_benchmark();
+        return 0;
+    }
+    
+    // Check for large scale benchmark mode
+    if (argc > 1 && std::string(argv[1]) == "--large-benchmark") {
+        std::cout << "=== RUNNING LARGE SCALE BENCHMARK ===" << std::endl;
+        run_large_scale_benchmark();
+        return 0;
+    }
+    
+    // Check for multi-core benchmark mode
+    if (argc > 1 && std::string(argv[1]) == "--multi-core") {
+        std::cout << "=== RUNNING MULTI-CORE BENCHMARK ===" << std::endl;
+        run_multi_core_benchmark();
+        return 0;
+    }
+    
+    // Check for adaptive core benchmark mode
+    if (argc > 1 && std::string(argv[1]) == "--adaptive") {
+        std::cout << "=== RUNNING ADAPTIVE CORE BENCHMARK ===" << std::endl;
+        run_adaptive_core_benchmark();
+        return 0;
+    }
+
+    // Display optimization information
+    std::cout << "=== OPTIMIZATION STATUS ===" << std::endl;
+    std::cout << "NEON SIMD: " << (NEONTechnicalIndicators::is_neon_available() ? "ENABLED" : "DISABLED") << std::endl;
+    std::cout << "AVX2 SIMD: " << (SIMDTechnicalIndicators::is_simd_available() ? "ENABLED" : "DISABLED") << std::endl;
+    std::cout << "CPU Cores: " << std::thread::hardware_concurrency() << std::endl;
+    std::cout << "============================" << std::endl;
+    std::cout << "Run with --benchmark to test performance optimizations" << std::endl;
+    std::cout << std::endl;
+
     const std::string input_dir = "/Users/jazzhashzzz/Desktop/Cinco-Quant/00_raw_data/7.11.25";
     const std::string output_dir = "/Users/jazzhashzzz/Desktop/MFT-Analysis/results/7.11.25";
 
@@ -91,8 +135,14 @@ int main() {
             ohlcv_series.end()
         );
         
+        // Calculate and display reading performance metrics
+        double read_time_seconds = read_duration.count() / 1000.0;
+        double files_per_second = ohlcv_series.size() / read_time_seconds;
+        
         std::cout << "Parallel reading completed in " << read_duration.count() << " ms" << std::endl;
         std::cout << "Successfully loaded " << ohlcv_series.size() << " stock datasets." << std::endl;
+        std::cout << "Reading Performance: " << std::fixed << std::setprecision(2) 
+                  << files_per_second << " files/second" << std::endl;
 
         std::vector<std::vector<double>> opens, highs, lows, closes, volumes;
         opens.reserve(ohlcv_series.size());
@@ -166,8 +216,57 @@ int main() {
         auto end_time = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
         
+        // Calculate and display processing performance metrics
+        double process_time_seconds = duration.count() / 1000.0;
+        double stocks_per_second = completed_count.load() / process_time_seconds;
+        double total_time_seconds = read_time_seconds + process_time_seconds;
+        double overall_throughput = completed_count.load() / total_time_seconds;
+        
+        // Estimate floating-point operations for GFLOPS calculation
+        // Based on the technical indicators computed per stock:
+        // - Returns calculation: ~N ops
+        // - SMA (20-period): ~N*20 ops  
+        // - Rolling volatility (20-period): ~N*20*3 ops
+        // - RSI (14-period): ~N*14*5 ops
+        // - Linear slopes (20 & 60 period): ~N*(20+60)*10 ops
+        // - Momentum, derivatives, correlations, etc.: ~N*50 ops
+        // - SIMD operations can be 4-8x more efficient
+        
+        // Conservative estimate: ~500 floating-point operations per data point per stock
+        size_t total_data_points = 0;
+        for (const auto& data : ohlcv_series) {
+            total_data_points += data->close.size();
+        }
+        
+        // Estimate total floating-point operations
+        const double ops_per_data_point = 500.0; // Conservative estimate
+        double total_flops = static_cast<double>(total_data_points) * ops_per_data_point;
+        double gflops = total_flops / (process_time_seconds * 1e9); // Convert to GFLOPS
+        
         std::cout << "Parallel processing completed in " << duration.count() << " ms" << std::endl;
         std::cout << "Successfully processed " << completed_count.load() << " stocks!" << std::endl;
+        
+        // Performance Summary
+        std::cout << "\n=== PERFORMANCE METRICS ===" << std::endl;
+        std::cout << "Reading Phase:" << std::endl;
+        std::cout << "  - Time: " << std::fixed << std::setprecision(3) << read_time_seconds << " seconds" << std::endl;
+        std::cout << "  - Throughput: " << std::fixed << std::setprecision(2) << files_per_second << " files/second" << std::endl;
+        
+        std::cout << "Processing Phase:" << std::endl;
+        std::cout << "  - Time: " << std::fixed << std::setprecision(3) << process_time_seconds << " seconds" << std::endl;
+        std::cout << "  - Throughput: " << std::fixed << std::setprecision(2) << stocks_per_second << " stocks/second" << std::endl;
+        
+        std::cout << "Computational Performance:" << std::endl;
+        std::cout << "  - Total Data Points: " << total_data_points << std::endl;
+        std::cout << "  - Estimated FLOPS: " << std::scientific << std::setprecision(2) << total_flops << std::endl;
+        std::cout << "  - Performance: " << std::fixed << std::setprecision(3) << gflops << " GFLOPS" << std::endl;
+        
+        std::cout << "Overall Performance:" << std::endl;
+        std::cout << "  - Total Time: " << std::fixed << std::setprecision(3) << total_time_seconds << " seconds" << std::endl;
+        std::cout << "  - Overall Throughput: " << std::fixed << std::setprecision(2) << overall_throughput << " stocks/second" << std::endl;
+        std::cout << "  - CPU Cores Used: " << num_threads << std::endl;
+        std::cout << "  - Read Threads Used: " << num_read_threads << std::endl;
+        std::cout << "=============================" << std::endl;
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
