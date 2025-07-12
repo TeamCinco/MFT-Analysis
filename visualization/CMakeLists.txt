@@ -12,7 +12,7 @@ find_package(OpenGL REQUIRED)
 pkg_check_modules(GLFW3 REQUIRED glfw3)
 
 # Include directories
-include_directories(src)
+include_directories(include)
 include_directories(deps/imgui)
 include_directories(deps/imgui/backends)
 include_directories(deps/implot)
@@ -63,6 +63,11 @@ target_link_libraries(${PROJECT_NAME}
     ${OPENGL_LIBRARIES}
     ${CMAKE_DL_LIBS}
 )
+
+# Add GLFW library path for macOS
+if(APPLE)
+    target_link_directories(${PROJECT_NAME} PRIVATE /opt/homebrew/lib)
+endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${GLFW3_INCLUDE_DIRS})
 target_compile_options(${PROJECT_NAME} PRIVATE ${GLFW3_CFLAGS_OTHER})
