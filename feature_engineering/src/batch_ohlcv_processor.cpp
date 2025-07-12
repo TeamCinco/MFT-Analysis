@@ -148,6 +148,53 @@ FeatureSet BatchOHLCProcessor::calculate_features(
     features.kama_10_2_30 = TechnicalIndicators::kama(close, 10, 2, 30);
     features.parkinson_volatility_20 = TechnicalIndicators::parkinson_volatility(high, low, 20);
 
+    // Statistical/Mathematical Features
+    features.z_score_20 = TechnicalIndicators::z_score_20(returns);
+    features.percentile_rank_50 = TechnicalIndicators::percentile_rank_50(close);
+    features.coefficient_of_variation_30 = TechnicalIndicators::coefficient_of_variation_30(returns);
+    features.detrended_price_oscillator_20 = TechnicalIndicators::detrended_price_oscillator_20(close);
+    features.hurst_exponent_100 = TechnicalIndicators::hurst_exponent_100(close);
+    features.garch_volatility_21 = TechnicalIndicators::garch_volatility_21(returns);
+    features.shannon_entropy_volume_10 = TechnicalIndicators::shannon_entropy_volume_10(volume);
+
+    // Technical Analysis Extended
+    features.chande_momentum_oscillator_14 = TechnicalIndicators::chande_momentum_oscillator_14(close);
+    features.aroon_oscillator_25 = TechnicalIndicators::aroon_oscillator_25(high, low);
+    features.trix_15 = TechnicalIndicators::trix_15(close);
+    features.vortex_indicator_14 = TechnicalIndicators::vortex_indicator_14(high, low, close);
+    features.supertrend_10_3 = TechnicalIndicators::supertrend_10_3(high, low, close);
+    features.ichimoku_senkou_span_A_9_26 = TechnicalIndicators::ichimoku_senkou_span_A_9_26(high, low);
+    features.ichimoku_senkou_span_B_26_52 = TechnicalIndicators::ichimoku_senkou_span_B_26_52(high, low);
+    features.fisher_transform_10 = TechnicalIndicators::fisher_transform_10(high, low);
+
+    // Volume/Liquidity Advanced
+    features.volume_weighted_average_price_intraday = TechnicalIndicators::volume_weighted_average_price_intraday(high, low, close, volume);
+    features.volume_profile_high_volume_node_intraday = TechnicalIndicators::volume_profile_high_volume_node_intraday(close, volume);
+    features.volume_profile_low_volume_node_intraday = TechnicalIndicators::volume_profile_low_volume_node_intraday(close, volume);
+    features.on_balance_volume_sma_20 = TechnicalIndicators::on_balance_volume_sma_20(close, volume);
+    features.klinger_oscillator_34_55 = TechnicalIndicators::klinger_oscillator_34_55(high, low, close, volume);
+    features.money_flow_index_14 = TechnicalIndicators::money_flow_index_14(high, low, close, volume);
+    features.vwap_deviation_stddev_30 = TechnicalIndicators::vwap_deviation_stddev_30(high, low, close, volume);
+
+    // Regime Detection
+    features.markov_regime_switching_garch_2_state = TechnicalIndicators::markov_regime_switching_garch_2_state(returns);
+    features.adx_rating_14 = TechnicalIndicators::adx_rating_14(high, low, close);
+    features.chow_test_statistic_breakpoint_detection_50 = TechnicalIndicators::chow_test_statistic_breakpoint_detection_50(returns);
+    features.market_regime_hmm_3_states_price_vol = TechnicalIndicators::market_regime_hmm_3_states_price_vol(close, features.volatility);
+    features.high_volatility_indicator_garch_threshold = TechnicalIndicators::high_volatility_indicator_garch_threshold(returns, 0.02);
+
+    // Non-Linear/Interaction
+    features.return_x_volume_interaction_10 = TechnicalIndicators::return_x_volume_interaction_10(returns, volume);
+    features.volatility_x_rsi_interaction_14 = TechnicalIndicators::volatility_x_rsi_interaction_14(features.volatility, features.rsi);
+    features.price_to_kama_ratio_20_10_30 = TechnicalIndicators::price_to_kama_ratio_20_10_30(close);
+    features.polynomial_regression_price_degree_2_slope = TechnicalIndicators::polynomial_regression_price_degree_2_slope(close, 20);
+
+    // Alternative Risk Measures
+    features.conditional_value_at_risk_cvar_95_20 = TechnicalIndicators::conditional_value_at_risk_cvar_95_20(returns);
+    features.drawdown_duration_from_peak_50 = TechnicalIndicators::drawdown_duration_from_peak_50(close);
+    features.ulcer_index_14 = TechnicalIndicators::ulcer_index_14(close);
+    features.sortino_ratio_30 = TechnicalIndicators::sortino_ratio_30(returns);
+
     return features;
 }
 
