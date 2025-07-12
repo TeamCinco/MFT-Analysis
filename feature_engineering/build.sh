@@ -1,32 +1,43 @@
 #!/bin/bash
-echo "High-Performance OHLCV Feature Extraction"
-echo "========================================="
 
-# Clean previous build
-rm -f *.o ohlc_features_cpp *.prof 2>/dev/null
+# Exit immediately if a command exits with a non-zero status.
+set -e
 
-echo "Building safe version..."
+# --- Configuration ---
+# The name of the executable target as defined in CMakeLists.txt
+EXECUTABLE_NAME="run_feature_extractor"
 
-# Use safer compilation flags
-CXX_FLAGS="-std=c++20 -O1 -g -fno-omit-frame-pointer"
-INCLUDES="-Iinclude"
-LIBS="-pthread"
+# --- Script Logic ---
+echo "Starting build process..."
 
-if [[ $(uname -m) == "arm64" ]]; then
-    CXX_FLAGS="$CXX_FLAGS -DAPPLE_SILICON=1"
+# 1. Create a build directory if it doesn't exist and navigate into it.
+mkdir -p build
+cd build
+
+# 2. Run CMake to configure the project. The ".." points to the parent directory
+#    where the root CMakeLists.txt is located.
+echo "Configuring with CMake..."
+cmake ..
+
+# 3. Run Make to compile the project.
+#    The '-j' flag uses multiple cores for a faster build.
+#    'nproc' or 'sysctl -n hw.ncpu' gets the number of available cores.
+echo "Compiling with Make..."
+if [[ "$OSTYPE" == "linux-gnu"* || "$OSTYPE" == "cygwin"* ]]; then
+    make -j$(nproc)
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    make -j$(sysctl -n hw.ncpu)
+else
+    make
 fi
 
-SOURCES="src/main.cpp src/csv_reader.cpp src/batch_processor.cpp src/technical_indicators.cpp src/simd_utils.cpp src/csv_writer.cpp"
+echo "Build completed successfully!"
+echo "Executable is located at: ./build/$EXECUTABLE_NAME"
 
-echo "Compiling..."
-clang++ $CXX_FLAGS $INCLUDES $SOURCES $LIBS -o ohlc_features_cpp
-
-if [ $? -eq 0 ]; then
-    echo "✅ Build successful!"
+# 4. Check if the user wants to run the executable.
+if [ "$1" == "run" ]; then
     echo ""
-    echo "Running..."
-    
-    ./ohlc_features_cpp /Users/jazzhashzzz/Desktop/Cinco-Quant/00_raw_data/7.11.25 /Users/jazzhashzzz/Desktop/MFT-Analysis/results/7.11.25
-else
-    echo "❌ Build failed!"
+    echo "--- Running Executable ---"
+    ./$EXECUTABLE_NAME
+    echo "--- Execution Finished ---"
 fi

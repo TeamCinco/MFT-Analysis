@@ -1,58 +1,48 @@
-cmake_minimum_required(VERSION 3.15)
-project(ohlc_features VERSION 1.0.0)
+cmake_minimum_required(VERSION 3.16)
+project(OhlcFeaturesCpp)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Aggressive optimization flags for release
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -mtune=native -flto -ffast-math -DNDEBUG -funroll-loops")
-elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -Wall -Wextra -Wpedantic")
+# --- Create the library from all .cpp files in src/ EXCEPT for main.cpp ---
+file(GLOB LIB_SOURCES "src/*.cpp")
+list(FILTER LIB_SOURCES EXCLUDE REGEX ".*/main.cpp$")
+
+add_library(ohlc_features ${LIB_SOURCES})
+target_include_directories(ohlc_features PUBLIC include)
+
+
+# --- Create the executable ---
+add_executable(run_feature_extractor src/main.cpp)
+target_link_libraries(run_feature_extractor PRIVATE ohlc_features)
+
+
+# --- Compiler-specific optimization flags ---
+if(MSVC)
+    target_compile_options(ohlc_features PRIVATE /O2 /arch:AVX2 /fp:fast)
+else()
+    target_compile_options(ohlc_features PRIVATE -O3 -march=native -mavx2 -mfma -funroll-loops -ffast-math)
 endif()
 
-# SIMD detection
-include(CheckCXXCompilerFlag)
-if(APPLE AND CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
-    message(STATUS "Apple Silicon detected - using ARM NEON")
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
-    check_cxx_compiler_flag("-mavx2" COMPILER_SUPPORTS_AVX2)
-    if(COMPILER_SUPPORTS_AVX2)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2 -mfma")
-        message(STATUS "AVX2 support detected")
-    endif()
+
+# --- Parallelism Backend (TBB on Apple) ---
+# On Apple systems, the default clang needs TBB to support std::execution::par.
+# The "-fopenmp" flag is NOT supported by Apple's Clang.
+if(APPLE)
+    find_package(TBB REQUIRED)
+    message(STATUS "Apple system detected. Linking against TBB for parallel algorithms.")
+    # Link the executable to TBB
+    target_link_libraries(run_feature_extractor PRIVATE TBB::tbb)
 endif()
 
-# Find packages
-find_package(Threads REQUIRED)
-
-# Core library sources
-set(CORE_SOURCES
-    src/batch_processor.cpp
-    src/technical_indicators.cpp
-    src/simd_utils.cpp
-    src/csv_reader.cpp
-    src/csv_writer.cpp
-)
-
-set(CORE_HEADERS
-    include/batch_processor.h
-    include/technical_indicators.h
-    include/simd_utils.h
-    include/csv_reader.h
-    include/csv_writer.h
-)
-
-# C++ executable only (no Python bindings)
-add_executable(ohlc_features_cpp 
-    src/main.cpp
-    ${CORE_SOURCES}
-)
-
-target_include_directories(ohlc_features_cpp PRIVATE include)
-target_link_libraries(ohlc_features_cpp PRIVATE Threads::Threads)
-
-# Enable LTO for release
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    set_property(TARGET ohlc_features_cpp PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+# For Linux systems with older GCC that might need it
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9)
+    find_package(TBB REQUIRED)
+    message(STATUS "GCC < 9 detected. Linking against TBB for parallel algorithms.")
+    target_link_libraries(run_feature_extractor PRIVATE TBB::tbb)
 endif()
+
+
+# --- Installation ---
+install(TARGETS run_feature_extractor DESTINATION bin)
