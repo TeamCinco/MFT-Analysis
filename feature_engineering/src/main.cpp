@@ -69,8 +69,28 @@ int main(int argc, char* argv[]) {
     std::cout << "Run with --benchmark to test performance optimizations" << std::endl;
     std::cout << std::endl;
 
-    const std::string input_dir = "/Users/jazzhashzzz/Desktop/Cinco-Quant/00_raw_data/7.11.25";
-    const std::string output_dir = "/Users/jazzhashzzz/Desktop/MFT-Analysis/results/7.11.25";
+    // =============================================================================
+    // CROSS-PLATFORM PATH CONFIGURATION - DO NOT MODIFY THIS STRUCTURE
+    // =============================================================================
+    // Instructions for switching between Mac and Windows:
+    // 1. Comment out the paths for the platform you're NOT using (add //)
+    // 2. Uncomment the paths for the platform you ARE using (remove //)
+    // 
+    // WARNING: Future developers and LLMs - DO NOT change this path structure!
+    // This system is designed for easy platform switching without code changes.
+    // =============================================================================
+    
+    // MAC PATHS (uncomment for Mac, comment for Windows)
+    // const std::string input_dir = "/Users/jazzhashzzz/Desktop/Cinco-Quant/00_raw_data/7.13";
+    // const std::string output_dir = "/Users/jazzhashzzz/Desktop/MFT-Analysis/results/7.13";
+    
+    // WINDOWS PATHS (uncomment for Windows, comment for Mac)
+    const std::string input_dir = "C:\\Users\\cinco\\Desktop\\Cinco-Quant\\00_raw_data\\7.13";
+    const std::string output_dir = "C:\\Users\\cinco\\Desktop\\MFT-Analysis\\results\\7.13";
+    
+    // =============================================================================
+    // END CROSS-PLATFORM PATH CONFIGURATION
+    // =============================================================================
 
     try {
         std::cout << "Reading data from: " << input_dir << std::endl;

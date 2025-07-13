@@ -7,7 +7,11 @@
 #include <immintrin.h>
 #define SIMD_ENABLED 1
 #else
+#ifdef _MSC_VER
+#pragma message("AVX2 not available. Falling back to scalar implementation.")
+#else
 #warning "AVX2 not available. Falling back to scalar implementation."
+#endif
 #define SIMD_ENABLED 0
 #endif
 
@@ -39,6 +43,5 @@ public:
     static std::vector<double> simd_divide_arrays(const std::vector<double>& a, const std::vector<double>& b);
     static double simd_sum_array(const std::vector<double>& data, size_t start, size_t count);
     static std::vector<double> simd_rolling_sum(const std::vector<double>& data, size_t window);
-    static std::vector<double> calculate_momentum_simd(const std::vector<double>& prices, int period);
 #endif
 };

@@ -8,15 +8,20 @@
 #define NEON_ENABLED 1
 #else
 #define NEON_ENABLED 0
+#ifdef _MSC_VER
+#pragma message("ARM NEON not available. Falling back to scalar implementation.")
+#else
 #warning "ARM NEON not available. Falling back to scalar implementation."
+#endif
 #endif
 
 class NEONTechnicalIndicators {
 public:
+    static constexpr size_t CACHE_LINE_SIZE = 64;   // Standard cache line size
+    
 #if NEON_ENABLED
     static constexpr size_t NEON_DOUBLE_COUNT = 2;  // 2 doubles per 128-bit register
     static constexpr size_t NEON_FLOAT_COUNT = 4;   // 4 floats per 128-bit register
-    static constexpr size_t CACHE_LINE_SIZE = 64;   // Apple M2 cache line size
     static constexpr size_t PREFETCH_DISTANCE = 8;  // Prefetch 8 cache lines ahead
 #endif
 

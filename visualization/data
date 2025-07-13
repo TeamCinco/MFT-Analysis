@@ -1,1 +1,20 @@
-/Users/jazzhashzzz/Desktop/MFT-Analysis/results/7.11.25
+# =============================================================================
+# CROSS-PLATFORM PATH CONFIGURATION - DO NOT MODIFY THIS STRUCTURE
+# =============================================================================
+# Instructions for switching between Mac and Windows:
+# 1. Comment out the path for the platform you're NOT using (add #)
+# 2. Uncomment the path for the platform you ARE using (remove #)
+# 
+# WARNING: Future developers and LLMs - DO NOT change this path structure!
+# This system is designed for easy platform switching without code changes.
+# =============================================================================
+
+# MAC PATH (uncomment for Mac, comment for Windows)
+# /Users/jazzhashzzz/Desktop/MFT-Analysis/results/7.13
+
+# WINDOWS PATH (uncomment for Windows, comment for Mac)
+C:\Users\cinco\Desktop\MFT-Analysis\results\7.13
+
+# =============================================================================
+# END CROSS-PLATFORM PATH CONFIGURATION
+# =============================================================================

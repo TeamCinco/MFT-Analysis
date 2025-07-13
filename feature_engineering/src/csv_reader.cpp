@@ -4,10 +4,19 @@
 #include <sstream>
 #include <stdexcept>
 #include <iostream>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
+#include <iomanip>
+#include <chrono>
+#include <ctime>
+
+#ifdef _WIN32
+    #include <windows.h>
+    #include <io.h>
+#else
+    #include <sys/mman.h>
+    #include <sys/stat.h>
+    #include <fcntl.h>
+    #include <unistd.h>
+#endif
 
 double FastCSVReader::fast_atof(const char* p, const char** endptr) {
     if (!p) { if (endptr) *endptr = p; return 0.0; }
@@ -44,38 +53,39 @@ std::chrono::system_clock::time_point FastCSVReader::parse_timestamp(const std::
         ss.clear();
         ss.str(datetime_str);
         ss >> std::get_time(&tm, "%Y-%m-%d");
-        if(ss.fail()) return std::chrono::system_clock::time_point::min();
+        if(ss.fail()) return (std::chrono::system_clock::time_point::min)();
     }
     return std::chrono::system_clock::from_time_t(std::mktime(&tm));
 }
 
 std::unique_ptr<OHLCVData> FastCSVReader::read_csv_file(const std::string& filepath) {
-    // Memory-mapped file reading for maximum speed
-    int fd = open(filepath.c_str(), O_RDONLY);
-    if (fd == -1) throw std::runtime_error("Cannot open file: " + filepath);
-    
-    struct stat sb;
-    if (fstat(fd, &sb) == -1) {
-        close(fd);
-        throw std::runtime_error("Cannot get file size: " + filepath);
+    // Cross-platform file reading approach
+    std::ifstream file(filepath, std::ios::binary);
+    if (!file.is_open()) {
+        throw std::runtime_error("Cannot open file: " + filepath);
     }
     
-    if (sb.st_size == 0) {
-        close(fd);
+    // Get file size
+    file.seekg(0, std::ios::end);
+    std::streamsize size = file.tellg();
+    file.seekg(0, std::ios::beg);
+    
+    if (size == 0) {
         return std::make_unique<OHLCVData>();
     }
     
-    char* mapped = static_cast<char*>(mmap(nullptr, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0));
-    if (mapped == MAP_FAILED) {
-        close(fd);
-        throw std::runtime_error("Cannot memory map file: " + filepath);
+    // Read entire file into memory
+    std::string content(size, '\0');
+    if (!file.read(&content[0], size)) {
+        throw std::runtime_error("Cannot read file: " + filepath);
     }
+    file.close();
     
     auto data = std::make_unique<OHLCVData>();
-    data->reserve(sb.st_size / 80); // Estimate rows based on file size
+    data->reserve(size / 80); // Estimate rows based on file size
     
-    const char* ptr = mapped;
-    const char* end = mapped + sb.st_size;
+    const char* ptr = content.c_str();
+    const char* end = ptr + content.size();
     
     // Skip header line
     while (ptr < end && *ptr != '\n') ptr++;
@@ -87,7 +97,7 @@ std::unique_ptr<OHLCVData> FastCSVReader::read_csv_file(const std::string& filep
         const char* line_end = ptr;
         
         // Find end of line
-        while (line_end < end && *line_end != '\n') line_end++;
+        while (line_end < end && *line_end != '\n' && *line_end != '\r') line_end++;
         
         if (line_end > line_start) {
             // Parse fields directly from memory
@@ -124,11 +134,11 @@ std::unique_ptr<OHLCVData> FastCSVReader::read_csv_file(const std::string& filep
             }
         }
         
-        ptr = line_end + 1;
+        // Move to next line, handling both \n and \r\n
+        ptr = line_end;
+        if (ptr < end && *ptr == '\r') ptr++;
+        if (ptr < end && *ptr == '\n') ptr++;
     }
-    
-    munmap(mapped, sb.st_size);
-    close(fd);
     
     return data;
 }
